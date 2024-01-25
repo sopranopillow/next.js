@@ -11,7 +11,7 @@ use turbopack_binding::{
         resolve::{
             options::{ImportMapResult, ImportMapping, ImportMappingReplacement},
             parse::Request,
-            ResolveResult,
+            RequestKey, ResolveResult,
         },
         virtual_source::VirtualSource,
     },
@@ -119,7 +119,10 @@ impl ImportMappingReplacement for NextFontLocalReplacer {
             AssetContent::file(FileContent::Content(file_content.into()).into()),
         );
 
-        Ok(ImportMapResult::Result(ResolveResult::source(Vc::upcast(js_asset)).into()).into())
+        Ok(ImportMapResult::Result(
+            ResolveResult::source(RequestKey::default(), Vc::upcast(js_asset)).into(),
+        )
+        .into())
     }
 }
 
@@ -184,7 +187,10 @@ impl ImportMappingReplacement for NextFontLocalCssModuleReplacer {
             AssetContent::file(FileContent::Content(stylesheet.into()).into()),
         );
 
-        Ok(ImportMapResult::Result(ResolveResult::source(Vc::upcast(css_asset)).into()).into())
+        Ok(ImportMapResult::Result(
+            ResolveResult::source(RequestKey::default(), Vc::upcast(css_asset)).into(),
+        )
+        .into())
     }
 }
 

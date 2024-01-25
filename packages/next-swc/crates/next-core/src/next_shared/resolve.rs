@@ -15,7 +15,7 @@ use turbopack_binding::{
             parse::Request,
             pattern::Pattern,
             plugin::{ResolvePlugin, ResolvePluginCondition},
-            ResolveResult, ResolveResultItem, ResolveResultOption,
+            RequestKey, ResolveResult, ResolveResultItem, ResolveResultOption,
         },
     },
 };
@@ -144,9 +144,10 @@ impl ResolvePlugin for NextExternalResolvePlugin {
         // Replace '/esm/' with '/' to match the CJS version of the file.
         let modified_path = &path[starting_index..].replace("/esm/", "/");
         Ok(Vc::cell(Some(
-            ResolveResult::primary(ResolveResultItem::OriginalReferenceTypeExternal(
-                modified_path.to_string(),
-            ))
+            ResolveResult::primary(
+                RequestKey::default(),
+                ResolveResultItem::OriginalReferenceTypeExternal(modified_path.to_string()),
+            )
             .into(),
         )))
     }
@@ -212,7 +213,8 @@ impl ResolvePlugin for NextNodeSharedRuntimeResolvePlugin {
         let new_path = fs_path.root().join(format!("{base}/{resource_request}"));
 
         Ok(Vc::cell(Some(
-            ResolveResult::source(Vc::upcast(FileSource::new(new_path))).into(),
+            ResolveResult::source(RequestKey::default(), Vc::upcast(FileSource::new(new_path)))
+                .into(),
         )))
     }
 }
@@ -306,7 +308,8 @@ impl ResolvePlugin for NextSharedRuntimeResolvePlugin {
         let modified_path = raw_fs_path.path.replace("next/dist/esm/", "next/dist/");
         let new_path = fs_path.root().join(modified_path);
         Ok(Vc::cell(Some(
-            ResolveResult::source(Vc::upcast(FileSource::new(new_path))).into(),
+            ResolveResult::source(RequestKey::default(), Vc::upcast(FileSource::new(new_path)))
+                .into(),
         )))
     }
 }

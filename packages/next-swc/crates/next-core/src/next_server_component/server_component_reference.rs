@@ -1,8 +1,10 @@
 use anyhow::Result;
 use turbo_tasks::{ValueToString, Vc};
 use turbopack_binding::turbopack::core::{
-    chunk::ChunkableModuleReference, module::Module, reference::ModuleReference,
-    resolve::ModuleResolveResult,
+    chunk::ChunkableModuleReference,
+    module::Module,
+    reference::ModuleReference,
+    resolve::{ModuleResolveResult, RequestKey},
 };
 
 #[turbo_tasks::value]
@@ -33,7 +35,7 @@ impl ValueToString for NextServerComponentModuleReference {
 impl ModuleReference for NextServerComponentModuleReference {
     #[turbo_tasks::function]
     fn resolve_reference(&self) -> Vc<ModuleResolveResult> {
-        ModuleResolveResult::module(self.asset).cell()
+        ModuleResolveResult::module(RequestKey::default(), self.asset).cell()
     }
 }
 

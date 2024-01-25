@@ -10,7 +10,8 @@ use turbopack_binding::{
             package_json,
             parse::Request,
             plugin::{ResolvePlugin, ResolvePluginCondition},
-            resolve, FindContextFileResult, ResolveResult, ResolveResultItem, ResolveResultOption,
+            resolve, FindContextFileResult, RequestKey, ResolveResult, ResolveResultItem,
+            ResolveResultOption,
         },
         source::Source,
     },
@@ -191,9 +192,10 @@ impl ResolvePlugin for ExternalCjsModulesResolvePlugin {
                 if let Some(request) = request.await?.request() {
                     // mark as external
                     Ok(ResolveResultOption::some(
-                        ResolveResult::primary(ResolveResultItem::OriginalReferenceTypeExternal(
-                            request,
-                        ))
+                        ResolveResult::primary(
+                            RequestKey::default(),
+                            ResolveResultItem::OriginalReferenceTypeExternal(request),
+                        )
                         .cell(),
                     ))
                 } else {

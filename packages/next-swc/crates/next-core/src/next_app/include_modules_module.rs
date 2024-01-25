@@ -7,7 +7,7 @@ use turbopack_binding::turbopack::{
         ident::AssetIdent,
         module::Module,
         reference::{ModuleReference, ModuleReferences},
-        resolve::ModuleResolveResult,
+        resolve::{ModuleResolveResult, RequestKey},
     },
     ecmascript::chunk::{
         EcmascriptChunkItem, EcmascriptChunkItemContent, EcmascriptChunkPlaceable,
@@ -174,7 +174,7 @@ impl ValueToString for IncludedModuleReference {
 impl ModuleReference for IncludedModuleReference {
     #[turbo_tasks::function]
     async fn resolve_reference(&self) -> Result<Vc<ModuleResolveResult>> {
-        Ok(ModuleResolveResult::module(self.module).cell())
+        Ok(ModuleResolveResult::module(RequestKey::default(), self.module).cell())
     }
 }
 
