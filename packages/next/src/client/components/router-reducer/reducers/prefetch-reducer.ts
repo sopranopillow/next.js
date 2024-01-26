@@ -3,6 +3,7 @@ import type {
   PrefetchAction,
   ReducerState,
   ReadonlyReducerState,
+  PrefetchCacheEntry,
 } from '../router-reducer-types'
 import { PrefetchKind } from '../router-reducer-types'
 import { prunePrefetchCache } from './prune-prefetch-cache'
@@ -22,8 +23,14 @@ export function prefetchReducer(
   const { url } = action
   url.searchParams.delete(NEXT_RSC_UNION_QUERY)
 
-  const prefetchCacheKey = createPrefetchCacheKey(url, state.nextUrl)
-  const cacheEntry = state.prefetchCache.get(prefetchCacheKey)
+  let prefetchCacheKey = createPrefetchCacheKey(url)
+  const interceptionCacheKey = createPrefetchCacheKey(url, state.nextUrl)
+  let cacheEntry =
+    // first check if there's a more specific interception route prefetch entry
+    // as we don't want to potentially re-use a cache node that would resolve to the same URL
+    // but renders differently when intercepted
+    state.prefetchCache.get(interceptionCacheKey) ||
+    state.prefetchCache.get(prefetchCacheKey)
 
   if (cacheEntry) {
     /**
@@ -51,27 +58,60 @@ export function prefetchReducer(
     }
   }
 
-  // fetchServerResponse is intentionally not awaited so that it can be unwrapped in the navigate-reducer
-  const serverResponse = prefetchQueue.enqueue(() =>
+  const newEntry = createPrefetchEntry({
+    state,
+    url,
+    kind: action.kind,
+    prefetchCacheKey,
+  })
+
+  state.prefetchCache.set(prefetchCacheKey, newEntry)
+
+  return state
+}
+
+export function createPrefetchEntry({
+  state,
+  url,
+  kind,
+  prefetchCacheKey,
+}: {
+  state: ReadonlyReducerState
+  url: URL
+  kind: PrefetchKind
+  prefetchCacheKey: string
+}): PrefetchCacheEntry {
+  // initiates the fetch request for the prefetch and attaches a listener
+  // to the promise to update the prefetch cache entry when the promise resolves (if necessary)
+  const getPrefetchData = () =>
     fetchServerResponse(
       url,
-      // initialTree is used when history.state.tree is missing because the history state is set in `useEffect` below, it being missing means this is the hydration case.
       state.tree,
       state.nextUrl,
       state.buildId,
-      action.kind
-    )
-  )
+      kind
+    ).then((prefetchResponse) => {
+      /* [flightData, canonicalUrlOverride, postpone, intercept] */
+      const [, , , intercept] = prefetchResponse
+      const existingPrefetchEntry = state.prefetchCache.get(prefetchCacheKey)
+      // If we discover that the prefetch corresponds with an interception route, we want to move it to
+      // a prefixed cache key to avoid clobbering an existing entry.
+      if (intercept && existingPrefetchEntry) {
+        const prefixedCacheKey = createPrefetchCacheKey(url, state.nextUrl)
+        state.prefetchCache.set(prefixedCacheKey, existingPrefetchEntry)
+        state.prefetchCache.delete(prefetchCacheKey)
+      }
 
-  // Create new tree based on the flightSegmentPath and router state patch
-  state.prefetchCache.set(prefetchCacheKey, {
-    // Create new tree based on the flightSegmentPath and router state patch
+      return prefetchResponse
+    })
+
+  const data = prefetchQueue.enqueue(getPrefetchData)
+
+  return {
     treeAtTimeOfPrefetch: state.tree,
-    data: serverResponse,
-    kind: action.kind,
+    data,
+    kind,
     prefetchTime: Date.now(),
     lastUsedTime: null,
-  })
-
-  return state
+  }
 }
