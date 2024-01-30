@@ -359,8 +359,11 @@ export function getResolveRoutes(
       }
 
       if (params) {
-        if (fsChecker.interceptionRoutes && route.name === 'before_files_end') {
-          for (const interceptionRoute of fsChecker.interceptionRoutes) {
+        if (
+          fsChecker.exportPathMapRoutes &&
+          route.name === 'before_files_end'
+        ) {
+          for (const interceptionRoute of fsChecker.exportPathMapRoutes) {
             const result = await handleRoute(interceptionRoute)
 
             if (result) {

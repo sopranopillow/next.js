@@ -44,6 +44,7 @@ interface WebServerOptions extends Options {
       | undefined
     incrementalCacheHandler?: any
     prerenderManifest: PrerenderManifest | undefined
+    interceptionRouteRewrites?: ManifestRewriteRoute[]
   }
 }
 
@@ -395,7 +396,6 @@ export default class NextWebServer extends BaseServer<WebServerOptions> {
   }
 
   protected getInterceptionRouteRewrites(): ManifestRewriteRoute[] {
-    // TODO: This needs to be implemented.
-    return []
+    return this.serverOptions.webServerConfig.interceptionRouteRewrites ?? []
   }
 }

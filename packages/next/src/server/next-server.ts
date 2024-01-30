@@ -371,6 +371,8 @@ export default class NextNodeServer extends BaseServer {
   }
 
   protected getInterceptionRouteRewrites(): ManifestRewriteRoute[] {
+    if (!this.enabledDirectories.app) return []
+
     const routesManifest = this.getRoutesManifest()
     return (
       routesManifest?.rewrites.beforeFiles.filter(isInterceptionRouteRewrite) ??

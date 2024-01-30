@@ -2001,7 +2001,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
       res.setHeader('vary', RSC_VARY_HEADER)
 
       if (isPrefetchRSCRequest) {
-        const couldBeRewritten = this.interceptionRouteRewrites?.some(
+        const couldBeRewritten = this.interceptionRouteRewrites.some(
           (rewrite) => {
             return new RegExp(rewrite.regex).test(resolvedUrlPathname)
           }
